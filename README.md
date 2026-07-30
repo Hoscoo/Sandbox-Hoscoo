@@ -2,7 +2,7 @@
 
 Payment orchestration across MNO, bank, card gateway, and cross-border rails
 for East Africa — plus an isolated, deterministic developer sandbox that
-third parties can integrate against before touching live rails.
+third parties can integrate against before touching live rails..
 
 ## Stack
 
