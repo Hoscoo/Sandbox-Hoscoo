@@ -1,0 +1,395 @@
+{
+  "info": {
+    "name": "Hoscoo Sandbox",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "hoscoo_test_key",
+      "value": "hsc_test_your_key_here"
+    }
+  ],
+  "item": [
+    {
+      "name": "Initiate a payment instruction (sandbox)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hoscoo_test_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://sandbox-api.hoscoo.com/v1/sandbox/payments",
+          "host": [
+            "https://sandbox-api.hoscoo.com"
+          ],
+          "path": [
+            "v1",
+            "sandbox",
+            "payments"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get sandbox payment lifecycle status",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hoscoo_test_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://sandbox-api.hoscoo.com/v1/sandbox/payments",
+          "host": [
+            "https://sandbox-api.hoscoo.com"
+          ],
+          "path": [
+            "v1",
+            "sandbox",
+            "payments"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Issue a deterministic sandbox FX quote",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hoscoo_test_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://sandbox-api.hoscoo.com/v1/sandbox/fx-quote",
+          "host": [
+            "https://sandbox-api.hoscoo.com"
+          ],
+          "path": [
+            "v1",
+            "sandbox",
+            "fx-quote"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Refresh (re-fetch) a previously issued quote",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hoscoo_test_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://sandbox-api.hoscoo.com/v1/sandbox/fx-quote",
+          "host": [
+            "https://sandbox-api.hoscoo.com"
+          ],
+          "path": [
+            "v1",
+            "sandbox",
+            "fx-quote"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Issue a fresh, cryptographically random hsc_test_ key",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hoscoo_test_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://sandbox-api.hoscoo.com/v1/sandbox/keys",
+          "host": [
+            "https://sandbox-api.hoscoo.com"
+          ],
+          "path": [
+            "v1",
+            "sandbox",
+            "keys"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Resolve a pending 3-DS/step-up challenge",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hoscoo_test_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://sandbox-api.hoscoo.com/v1/sandbox/payments/challenge",
+          "host": [
+            "https://sandbox-api.hoscoo.com"
+          ],
+          "path": [
+            "v1",
+            "sandbox",
+            "payments",
+            "challenge"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Register a programmable simulation rule",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hoscoo_test_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://sandbox-api.hoscoo.com/v1/sandbox/simulate",
+          "host": [
+            "https://sandbox-api.hoscoo.com"
+          ],
+          "path": [
+            "v1",
+            "sandbox",
+            "simulate"
+          ]
+        }
+      }
+    },
+    {
+      "name": "List active simulation rules for this API key",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hoscoo_test_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://sandbox-api.hoscoo.com/v1/sandbox/simulate",
+          "host": [
+            "https://sandbox-api.hoscoo.com"
+          ],
+          "path": [
+            "v1",
+            "sandbox",
+            "simulate"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Clear all simulation rules for this API key",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hoscoo_test_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://sandbox-api.hoscoo.com/v1/sandbox/simulate",
+          "host": [
+            "https://sandbox-api.hoscoo.com"
+          ],
+          "path": [
+            "v1",
+            "sandbox",
+            "simulate"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Reset this tenant's mock ledger to seeded starting balances",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hoscoo_test_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://sandbox-api.hoscoo.com/v1/sandbox/reset",
+          "host": [
+            "https://sandbox-api.hoscoo.com"
+          ],
+          "path": [
+            "v1",
+            "sandbox",
+            "reset"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Register this tenant's webhook delivery URL",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hoscoo_test_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://sandbox-api.hoscoo.com/v1/sandbox/webhooks",
+          "host": [
+            "https://sandbox-api.hoscoo.com"
+          ],
+          "path": [
+            "v1",
+            "sandbox",
+            "webhooks"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get this tenant's registered webhook URL",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hoscoo_test_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://sandbox-api.hoscoo.com/v1/sandbox/webhooks",
+          "host": [
+            "https://sandbox-api.hoscoo.com"
+          ],
+          "path": [
+            "v1",
+            "sandbox",
+            "webhooks"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Re-deliver a stored webhook event verbatim",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hoscoo_test_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://sandbox-api.hoscoo.com/v1/sandbox/webhooks/replay",
+          "host": [
+            "https://sandbox-api.hoscoo.com"
+          ],
+          "path": [
+            "v1",
+            "sandbox",
+            "webhooks",
+            "replay"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Webhook delivery attempt log, with MSISDNs masked in every payload preview",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{hoscoo_test_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://sandbox-api.hoscoo.com/v1/sandbox/webhooks/logs",
+          "host": [
+            "https://sandbox-api.hoscoo.com"
+          ],
+          "path": [
+            "v1",
+            "sandbox",
+            "webhooks",
+            "logs"
+          ]
+        }
+      }
+    }
+  ]
+}

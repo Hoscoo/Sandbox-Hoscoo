@@ -1,0 +1,1129 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Hoscoo Payments API",
+    "version": "1.0.0",
+    "description": "Unified payment orchestration across MNO, bank, gateway, and cross-border rails. Routes tagged `sandbox-only` exist only at sandbox-api.hoscoo.com and must never be integrated against in production."
+  },
+  "servers": [
+    {
+      "url": "https://api.hoscoo.com",
+      "description": "Production"
+    },
+    {
+      "url": "https://sandbox-api.hoscoo.com",
+      "description": "Sandbox"
+    }
+  ],
+  "security": [
+    {
+      "apiKeyAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "payments",
+      "description": "Domestic and cross-border payment initiation and status."
+    },
+    {
+      "name": "fx",
+      "description": "Cross-border FX quoting."
+    },
+    {
+      "name": "sandbox-only",
+      "description": "Exists only in the sandbox plane. Never call these against production."
+    }
+  ],
+  "paths": {
+    "/initiate-payment": {
+      "post": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Initiate a payment instruction",
+        "description": "The first-call integration path is CROSS_MNO_TO_MNO (e.g. M-Pesa to Airtel Money): no bank fixture, no FX. The cross-border corridor path (channel: CROSS_BORDER) is the natural second call.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentInstructionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Instruction accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Market not live, same-provider on-us, or alias unmapped",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No eligible rail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payment-status": {
+      "get": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Get payment lifecycle status",
+        "parameters": [
+          {
+            "name": "transactionId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks": {
+      "post": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Register this merchant's production webhook delivery URL",
+        "responses": {
+          "200": {
+            "description": "Registered"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Get this merchant's registered webhook URL",
+        "responses": {
+          "200": {
+            "description": "URL"
+          }
+        }
+      }
+    },
+    "/v1/sandbox/payments": {
+      "post": {
+        "tags": [
+          "sandbox-only",
+          "payments"
+        ],
+        "summary": "Initiate a payment instruction (sandbox)",
+        "description": "Identical validation, market gating, and routing to /initiate-payment. Settles against the deterministic mock ledger, never a real rail.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentInstructionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Instruction accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResult"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "sandbox-only",
+          "payments"
+        ],
+        "summary": "Get sandbox payment lifecycle status",
+        "parameters": [
+          {
+            "name": "transactionId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sandbox/fx-quote": {
+      "post": {
+        "tags": [
+          "sandbox-only",
+          "fx"
+        ],
+        "summary": "Issue a deterministic sandbox FX quote",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FxQuoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Quote issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FxQuote"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "sandbox-only",
+          "fx"
+        ],
+        "summary": "Refresh (re-fetch) a previously issued quote",
+        "parameters": [
+          {
+            "name": "quoteId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quote",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FxQuote"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sandbox/keys": {
+      "post": {
+        "tags": [
+          "sandbox-only"
+        ],
+        "summary": "Issue a fresh, cryptographically random hsc_test_ key",
+        "description": "No auth required — this is the bootstrap endpoint. Not required to use the sandbox: any hsc_test_-prefixed string auto-registers on first use, but this is the recommended way to get one.",
+        "responses": {
+          "201": {
+            "description": "Key issued"
+          }
+        }
+      }
+    },
+    "/v1/sandbox/payments/challenge": {
+      "post": {
+        "tags": [
+          "sandbox-only",
+          "payments"
+        ],
+        "summary": "Resolve a pending 3-DS/step-up challenge",
+        "description": "Called by the Test Bank modal after the simulated customer approves or denies a challenge issued by initiating a payment against a THREE_DS_CHALLENGE magic MSISDN.",
+        "responses": {
+          "200": {
+            "description": "Resolved"
+          },
+          "402": {
+            "description": "Challenge denied or settlement failed"
+          },
+          "409": {
+            "description": "No pending challenge to resolve",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sandbox/simulate": {
+      "post": {
+        "tags": [
+          "sandbox-only"
+        ],
+        "summary": "Register a programmable simulation rule",
+        "responses": {
+          "201": {
+            "description": "Rule registered"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "sandbox-only"
+        ],
+        "summary": "List active simulation rules for this API key",
+        "responses": {
+          "200": {
+            "description": "Rules"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "sandbox-only"
+        ],
+        "summary": "Clear all simulation rules for this API key",
+        "responses": {
+          "200": {
+            "description": "Cleared"
+          }
+        }
+      }
+    },
+    "/v1/sandbox/reset": {
+      "post": {
+        "tags": [
+          "sandbox-only"
+        ],
+        "summary": "Reset this tenant's mock ledger to seeded starting balances",
+        "responses": {
+          "200": {
+            "description": "Reset"
+          }
+        }
+      }
+    },
+    "/v1/sandbox/webhooks": {
+      "post": {
+        "tags": [
+          "sandbox-only"
+        ],
+        "summary": "Register this tenant's webhook delivery URL",
+        "responses": {
+          "200": {
+            "description": "Registered"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "sandbox-only"
+        ],
+        "summary": "Get this tenant's registered webhook URL",
+        "responses": {
+          "200": {
+            "description": "URL"
+          }
+        }
+      }
+    },
+    "/v1/sandbox/webhooks/replay": {
+      "post": {
+        "tags": [
+          "sandbox-only"
+        ],
+        "summary": "Re-deliver a stored webhook event verbatim",
+        "description": "Reuses the original event id. Never re-enters routing, the ledger, or FX quoting — see the replay-isolation invariant in the parity contract.",
+        "responses": {
+          "202": {
+            "description": "Replay queued"
+          },
+          "404": {
+            "description": "Event not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sandbox/webhooks/logs": {
+      "get": {
+        "tags": [
+          "sandbox-only"
+        ],
+        "summary": "Webhook delivery attempt log, with MSISDNs masked in every payload preview",
+        "responses": {
+          "200": {
+            "description": "Delivery log"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKeyAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Bearer token. Key prefix `hsc_test_` for sandbox, `hsc_live_` for production — never interchangeable."
+      }
+    },
+    "schemas": {
+      "Channel": {
+        "type": "string",
+        "enum": [
+          "MNO_TO_MNO",
+          "MNO_TO_BANK",
+          "BANK_TO_MNO",
+          "BANK_TO_BANK",
+          "GATEWAY_CHECKOUT",
+          "CROSS_BORDER"
+        ],
+        "description": "MNO_TO_MNO: Wallet to wallet (MNO -> MNO); MNO_TO_BANK: Wallet to bank (MNO -> BANK); BANK_TO_MNO: Bank to wallet (BANK -> MNO); BANK_TO_BANK: Bank to bank (BANK -> BANK); GATEWAY_CHECKOUT: Card checkout (CARD -> BANK); CROSS_BORDER: Cross-border corridor (MNO -> MNO)"
+      },
+      "Market": {
+        "type": "string",
+        "enum": [
+          "TZ",
+          "KE",
+          "UG",
+          "RW"
+        ]
+      },
+      "MarketStatus": {
+        "type": "object",
+        "description": "Status per market. PLANNED markets must never be presented as available.",
+        "properties": {
+          "TZ": {
+            "type": "string",
+            "enum": [
+              "LIVE"
+            ]
+          },
+          "KE": {
+            "type": "string",
+            "enum": [
+              "PLANNED"
+            ]
+          },
+          "UG": {
+            "type": "string",
+            "enum": [
+              "PLANNED"
+            ]
+          },
+          "RW": {
+            "type": "string",
+            "enum": [
+              "PLANNED"
+            ]
+          }
+        }
+      },
+      "CurrencyCode": {
+        "type": "string",
+        "enum": [
+          "TZS",
+          "KES",
+          "UGX",
+          "RWF"
+        ]
+      },
+      "CurrencyRegistry": {
+        "type": "object",
+        "description": "Every currency's true ISO 4217 minor-unit exponent. UGX and RWF are zero-decimal.",
+        "properties": {
+          "TZS": {
+            "type": "object",
+            "properties": {
+              "exponent": {
+                "type": "integer",
+                "const": 2
+              },
+              "symbol": {
+                "type": "string",
+                "const": "TSh"
+              }
+            }
+          },
+          "KES": {
+            "type": "object",
+            "properties": {
+              "exponent": {
+                "type": "integer",
+                "const": 2
+              },
+              "symbol": {
+                "type": "string",
+                "const": "KSh"
+              }
+            }
+          },
+          "UGX": {
+            "type": "object",
+            "properties": {
+              "exponent": {
+                "type": "integer",
+                "const": 0
+              },
+              "symbol": {
+                "type": "string",
+                "const": "USh"
+              }
+            }
+          },
+          "RWF": {
+            "type": "object",
+            "properties": {
+              "exponent": {
+                "type": "integer",
+                "const": 0
+              },
+              "symbol": {
+                "type": "string",
+                "const": "FRw"
+              }
+            }
+          }
+        }
+      },
+      "WalletProvider": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "market": {
+            "$ref": "#/components/schemas/Market"
+          }
+        },
+        "examples": [
+          {
+            "code": "MPESA_TZ",
+            "displayName": "M-Pesa",
+            "market": "TZ"
+          },
+          {
+            "code": "TIGO_PESA",
+            "displayName": "Mixx by Yas",
+            "market": "TZ"
+          },
+          {
+            "code": "AIRTEL_MONEY",
+            "displayName": "Airtel Money",
+            "market": "TZ"
+          },
+          {
+            "code": "HALOPESA",
+            "displayName": "HaloPesa",
+            "market": "TZ"
+          },
+          {
+            "code": "TTCL_PESA",
+            "displayName": "T-Pesa",
+            "market": "TZ"
+          },
+          {
+            "code": "SELCOM_PESA",
+            "displayName": "Selcom Pesa",
+            "market": "TZ"
+          }
+        ]
+      },
+      "BankProvider": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          }
+        },
+        "examples": [
+          {
+            "code": "CRDB",
+            "displayName": "CRDB Bank"
+          },
+          {
+            "code": "NMB",
+            "displayName": "NMB Bank"
+          },
+          {
+            "code": "NBC",
+            "displayName": "NBC Bank"
+          },
+          {
+            "code": "STANBIC_TZ",
+            "displayName": "Stanbic Bank Tanzania"
+          },
+          {
+            "code": "EQUITY_TZ",
+            "displayName": "Equity Bank Tanzania"
+          }
+        ]
+      },
+      "GatewayProvider": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          }
+        },
+        "examples": [
+          {
+            "code": "SELCOM_GATEWAY",
+            "displayName": "Selcom Gateway"
+          },
+          {
+            "code": "DPO_PAY",
+            "displayName": "DPO Pay"
+          }
+        ]
+      },
+      "AccountType": {
+        "type": "string",
+        "enum": [
+          "WALLET",
+          "SAVINGS",
+          "CURRENT",
+          "MERCHANT_TILL"
+        ]
+      },
+      "Leg": {
+        "type": "object",
+        "required": [
+          "providerCode",
+          "accountType",
+          "identifier"
+        ],
+        "properties": {
+          "providerCode": {
+            "type": "string",
+            "description": "Authoritative — never inferred from MSISDN prefix."
+          },
+          "accountType": {
+            "$ref": "#/components/schemas/AccountType"
+          },
+          "identifier": {
+            "type": "string",
+            "description": "MSISDN, bank account number, or PAN depending on leg kind."
+          }
+        }
+      },
+      "PaymentInstructionInput": {
+        "type": "object",
+        "description": "The dual-leg payload shared verbatim between production and sandbox.",
+        "required": [
+          "channel",
+          "amountMinor",
+          "currency",
+          "market",
+          "source",
+          "destination",
+          "reference"
+        ],
+        "properties": {
+          "channel": {
+            "$ref": "#/components/schemas/Channel"
+          },
+          "amountMinor": {
+            "type": "string",
+            "description": "Integer minor units as a decimal string. Never a float."
+          },
+          "currency": {
+            "$ref": "#/components/schemas/CurrencyCode"
+          },
+          "market": {
+            "$ref": "#/components/schemas/Market"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Leg"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/Leg"
+          },
+          "reference": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]{1,64}$"
+          },
+          "destinationCurrency": {
+            "$ref": "#/components/schemas/CurrencyCode"
+          },
+          "quoteId": {
+            "type": "string",
+            "description": "Required for channel: CROSS_BORDER."
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "LifecycleState": {
+        "type": "string",
+        "enum": [
+          "PENDING_AUTHORIZATION",
+          "AUTHORIZED",
+          "ROUTING",
+          "SETTLING",
+          "COMPLETED",
+          "FAILED",
+          "EXPIRED"
+        ]
+      },
+      "PaymentResult": {
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LifecycleState"
+          },
+          "rail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reasonCode": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "requiresAction": {
+            "type": "boolean"
+          }
+        }
+      },
+      "FxQuoteRequest": {
+        "type": "object",
+        "required": [
+          "corridorId",
+          "amountMinor"
+        ],
+        "properties": {
+          "corridorId": {
+            "type": "string"
+          },
+          "amountMinor": {
+            "type": "string"
+          },
+          "adverse": {
+            "type": "boolean",
+            "description": "Sandbox-only opt-in for adverse-rate-movement scenarios."
+          }
+        }
+      },
+      "FxQuote": {
+        "type": "object",
+        "properties": {
+          "quoteId": {
+            "type": "string"
+          },
+          "corridorId": {
+            "type": "string"
+          },
+          "fromCurrency": {
+            "$ref": "#/components/schemas/CurrencyCode"
+          },
+          "toCurrency": {
+            "$ref": "#/components/schemas/CurrencyCode"
+          },
+          "amountMinor": {
+            "type": "string"
+          },
+          "midRateNumerator": {
+            "type": "string"
+          },
+          "midRateDenominator": {
+            "type": "string"
+          },
+          "spreadBps": {
+            "type": "integer"
+          },
+          "creditedMinor": {
+            "type": "string"
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Execution after this timestamp must fail closed with QUOTE_EXPIRED."
+          }
+        }
+      },
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "VALIDATION_FAILED",
+          "MARKET_NOT_LIVE",
+          "UNKNOWN_PROVIDER",
+          "SAME_PROVIDER_ON_US",
+          "INSUFFICIENT_FUNDS",
+          "ALIAS_UNMAPPED",
+          "RAIL_UNAVAILABLE",
+          "TIMEOUT",
+          "THREE_DS_CHALLENGE_FAILED",
+          "DEBIT_SUCCEEDED_CREDIT_FAILED",
+          "QUOTE_EXPIRED",
+          "RATE_MOVED",
+          "CORRIDOR_LIQUIDITY_EXHAUSTED",
+          "OUTSIDE_CUTOFF",
+          "IDEMPOTENCY_KEY_REUSED",
+          "SIGNATURE_INVALID",
+          "ENVIRONMENT_MISMATCH",
+          "UNAUTHORIZED",
+          "RATE_LIMITED",
+          "INTERNAL_ERROR"
+        ]
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "$ref": "#/components/schemas/ErrorCode"
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {
+    "payment.authorized": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transactionId": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/LifecycleState"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Merchant endpoint acknowledged delivery"
+          }
+        }
+      }
+    },
+    "payment.routing": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transactionId": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/LifecycleState"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Merchant endpoint acknowledged delivery"
+          }
+        }
+      }
+    },
+    "payment.settling": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transactionId": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/LifecycleState"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Merchant endpoint acknowledged delivery"
+          }
+        }
+      }
+    },
+    "payment.completed": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transactionId": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/LifecycleState"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Merchant endpoint acknowledged delivery"
+          }
+        }
+      }
+    },
+    "payment.failed": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transactionId": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/LifecycleState"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Merchant endpoint acknowledged delivery"
+          }
+        }
+      }
+    },
+    "payment.expired": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transactionId": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/LifecycleState"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Merchant endpoint acknowledged delivery"
+          }
+        }
+      }
+    },
+    "fx.quote_issued": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FxQuote"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Acknowledged"
+        }
+      }
+    },
+    "fx.quote_expired": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FxQuote"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Acknowledged"
+        }
+      }
+    },
+    "fx.applied": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FxQuote"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Acknowledged"
+        }
+      }
+    },
+    "corridor.settlement_completed": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FxQuote"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Acknowledged"
+        }
+      }
+    }
+  }
+}

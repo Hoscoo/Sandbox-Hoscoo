@@ -1,0 +1,13 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: hoscoo
+      POSTGRES_DB: hoscoo
+    ports:
+      - "55432:5432"
+    volumes:
+      - hoscoo_pgdata:/var/lib/postgresql/data
+
+volumes:
+  hoscoo_pgdata:

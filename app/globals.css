@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+/*
+ * Color tokens match hoscoo.com's real brand exactly for background,
+ * foreground, primary, and primary-foreground (sampled directly from the
+ * live site in both light and dark mode — see the primary hex values
+ * below). Everything else (secondary/muted/accent/border/ring) is derived
+ * in the same green hue family rather than copied, since those weren't
+ * independently verified against the live site.
+ */
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+
+  --color-background: #fcfefd;
+  --color-foreground: #0c1616;
+
+  --color-card: oklch(100% 0 0);
+  --color-card-foreground: #0c1616;
+
+  --color-primary: #006c59;
+  --color-primary-foreground: #f8fdfc;
+
+  --color-secondary: oklch(96% 0.01 165);
+  --color-secondary-foreground: oklch(25% 0.02 165);
+
+  --color-muted: oklch(96% 0.005 165);
+  --color-muted-foreground: oklch(50% 0.02 165);
+
+  --color-accent: oklch(94% 0.04 165);
+  --color-accent-foreground: oklch(25% 0.02 165);
+
+  --color-destructive: oklch(55% 0.22 25);
+  --color-destructive-foreground: oklch(98% 0 0);
+
+  --color-success: oklch(55% 0.15 165);
+  --color-success-foreground: oklch(98% 0 0);
+
+  --color-warning: oklch(70% 0.18 75);
+  --color-warning-foreground: oklch(20% 0.02 75);
+
+  --color-border: oklch(90% 0.01 165);
+  --color-input: oklch(90% 0.01 165);
+  --color-ring: #006c59;
+
+  /* Sandbox is visually distinct from production: amber-coded, never confusable with a live surface. */
+  --color-sandbox: oklch(75% 0.16 70);
+  --color-sandbox-foreground: oklch(20% 0.02 70);
+  --color-sandbox-border: oklch(65% 0.17 70);
+
+  --radius: 0.625rem;
+}
+
+/*
+ * Dark-mode overrides as plain CSS custom-property redeclarations under a
+ * real @media query — NOT a second @theme block. Tailwind v4's @theme
+ * directive flattens nested @theme blocks into one unconditional :root
+ * regardless of the @media wrapper (verified against the compiled output:
+ * the dark values were winning unconditionally, dropping the media
+ * condition entirely). Plain CSS custom properties follow normal
+ * cascade/media-query rules and don't go through that directive, so this is
+ * both simpler and actually correct.
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #050f10;
+    --color-foreground: #eff5f4;
+    --color-card: oklch(20% 0.015 165);
+    --color-card-foreground: #eff5f4;
+    --color-primary: #56c1a4;
+    --color-primary-foreground: #001313;
+    --color-secondary: oklch(26% 0.015 165);
+    --color-secondary-foreground: oklch(92% 0.005 165);
+    --color-muted: oklch(24% 0.012 165);
+    --color-muted-foreground: oklch(70% 0.01 165);
+    --color-accent: oklch(28% 0.025 165);
+    --color-accent-foreground: oklch(92% 0.005 165);
+    --color-border: oklch(30% 0.012 165);
+    --color-input: oklch(30% 0.012 165);
+    --color-ring: #56c1a4;
+    --color-sandbox: oklch(70% 0.16 70);
+    --color-sandbox-foreground: oklch(15% 0.02 70);
+    --color-sandbox-border: oklch(60% 0.17 70);
+  }
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+}

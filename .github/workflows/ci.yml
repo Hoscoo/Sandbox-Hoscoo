@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: hoscoo
+          POSTGRES_DB: hoscoo
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Present for the whole job so lib/sandbox/store.ts picks the Postgres
+      # adapter by default — postgres-store.test.ts self-skips without this,
+      # so without it CI would silently never actually run the live-database
+      # integration test at all.
+      DATABASE_URL: postgres://postgres:hoscoo@localhost:55432/hoscoo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Push Drizzle schema to the CI database
+        run: npx drizzle-kit push --force
+      - run: npm run test
+      - name: OpenAPI drift check
+        run: npm run openapi:check
+      - run: npm run build
