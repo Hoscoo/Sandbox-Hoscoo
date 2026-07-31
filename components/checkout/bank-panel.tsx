@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { BankSelector } from "./bank-selector";
 import { TransactionMonitor } from "./transaction-monitor";
+import { AmountHint } from "@/components/ui/amount-hint";
 import { isTerminalState, type LifecycleState } from "@/lib/lifecycle";
 
 import { DEMO_AUTH_HEADERS as AUTH_HEADERS } from "@/lib/sandbox/demo-key";
@@ -95,6 +96,7 @@ export function BankPanel() {
         <div className="flex flex-col gap-2">
           <Label>Amount (minor units, TZS)</Label>
           <Input value={amount} onChange={(e) => setAmount(e.target.value)} />
+          <AmountHint amountMinor={amount} currency="TZS" />
         </div>
         <Button onClick={submit} disabled={submitting || !sourceBank || !destBank || !amount}>
           Initiate bank transfer

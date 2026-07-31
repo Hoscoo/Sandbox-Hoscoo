@@ -71,9 +71,6 @@ export default function SandboxPortalPage() {
           <Link href="/sandbox/try" className={buttonVariants({ variant: "default" })}>
             Try it live
           </Link>
-          <Link href="/sandbox/console" className={buttonVariants({ variant: "default" })}>
-            Full console
-          </Link>
           <a href="/openapi/v1.json" target="_blank" rel="noreferrer" className={buttonVariants({ variant: "outline" })}>
             OpenAPI spec (v1)
           </a>

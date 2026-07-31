@@ -13,6 +13,7 @@ import { MnoSelector } from "./mno-selector";
 import { AccountTypeSelector } from "./account-type-selector";
 import { TransactionMonitor } from "./transaction-monitor";
 import { TestBankModal } from "@/components/sandbox/test-bank-modal";
+import { AmountHint } from "@/components/ui/amount-hint";
 import { MNOS, type AccountType } from "@/lib/providers";
 import { isTerminalState, type LifecycleState } from "@/lib/lifecycle";
 
@@ -135,6 +136,7 @@ export function CheckoutPanel() {
         <div className="flex flex-col gap-2">
           <Label>Amount (minor units, TZS)</Label>
           <Input placeholder="e.g. 500000 = TSh 5,000.00" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          <AmountHint amountMinor={amount} currency="TZS" />
         </div>
         <Button onClick={submit} disabled={submitting || !sourceProvider || !destProvider || !amount}>
           Initiate payment

@@ -33,8 +33,7 @@ DATABASE_URL=postgres://postgres:hoscoo@localhost:55432/hoscoo npm run dev
 |---|---|
 | `/` | Marketing homepage — coverage, corridors, live routing engine |
 | `/sandbox/portal` | Sandbox docs: endpoint reference, OpenAPI spec, Postman collection |
-| `/sandbox/try` | The first-call wedge path: domestic wallet-to-wallet, live |
-| `/sandbox/console` | Every channel (wallet, cross-border, bank, card), simulation rules, webhooks, and key issuance — all live |
+| `/sandbox/try` | The full sandbox console — every channel (wallet, cross-border, bank, card), simulation rules, webhooks, and key issuance, all live |
 | `/sandbox/fixtures` | The deterministic magic-value table, rendered from source |
 | `lib/corridors.ts`, `lib/providers.ts` | The shared currency/market/channel/provider registries — production and sandbox both import these, never fork them |
 | `lib/sandbox/` | Everything sandbox-only: ledger, simulation engine, webhooks, environment resolution |

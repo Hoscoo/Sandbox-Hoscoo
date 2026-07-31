@@ -24,8 +24,8 @@ export function RoutingEngine() {
             <CardContent className="flex flex-col gap-1 text-sm">
               {SAMPLE_AMOUNTS_MINOR.map((amount) => (
                 <div key={amount.toString()} className="flex justify-between text-muted-foreground">
-                  <span>{amount.toString()}</span>
-                  <span>{railCost(rail, amount).toString()}</span>
+                  <span>{amount.toLocaleString("en-US")}</span>
+                  <span>{railCost(rail, amount).toLocaleString("en-US")}</span>
                 </div>
               ))}
             </CardContent>
@@ -34,8 +34,8 @@ export function RoutingEngine() {
       </div>
       <div className="text-sm text-muted-foreground">
         Crossover: MNO_INTERCONNECT &rarr; TIPS becomes cheaper at{" "}
-        {crossoverAmount("MNO_INTERCONNECT", "TIPS")?.toString() ?? "never"} minor units — derived from the fee
-        model, not hardcoded.
+        {crossoverAmount("MNO_INTERCONNECT", "TIPS")?.toLocaleString("en-US") ?? "never"} minor units — derived from
+        the fee model, not hardcoded.
       </div>
     </section>
   );

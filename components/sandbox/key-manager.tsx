@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { DEMO_AUTH_HEADERS as AUTH_HEADERS } from "@/lib/sandbox/demo-key";
+import { formatCurrency, type CurrencyCode } from "@/lib/corridors";
 
 interface IssuedKey {
   key: string;
@@ -77,7 +78,7 @@ export function KeyManager() {
               {Object.entries(balances).map(([currency, amount]) => (
                 <div key={currency} className="flex justify-between">
                   <span className="text-muted-foreground">{currency}</span>
-                  <span>{amount}</span>
+                  <span>{formatCurrency(BigInt(amount), currency as CurrencyCode)}</span>
                 </div>
               ))}
             </div>

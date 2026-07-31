@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MnoSelector } from "./mno-selector";
+import { AmountHint } from "@/components/ui/amount-hint";
 import { TransactionMonitor } from "./transaction-monitor";
 import { CORRIDORS, MARKET_STATUS_META, formatCurrency } from "@/lib/corridors";
 import { isTerminalState, type LifecycleState } from "@/lib/lifecycle";
@@ -150,6 +151,7 @@ export function CrossBorderPanel() {
         <div className="flex flex-col gap-2">
           <Label>Amount (minor units, {corridor.fromCurrency})</Label>
           <Input value={amount} onChange={(e) => { setAmount(e.target.value); setQuote(null); setQuoteId(null); }} />
+          <AmountHint amountMinor={amount} currency={corridor.fromCurrency} />
         </div>
         <Button variant="outline" onClick={getQuote} disabled={quoting || !amount}>
           {quoting ? "Quoting…" : "Get FX quote"}

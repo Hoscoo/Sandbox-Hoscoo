@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BankSelector } from "./bank-selector";
 import { TransactionMonitor } from "./transaction-monitor";
 import { TestBankModal } from "@/components/sandbox/test-bank-modal";
+import { AmountHint } from "@/components/ui/amount-hint";
 import { GATEWAY_PROVIDERS, detectCardScheme, isValidCardNumber, formatCardNumber } from "@/lib/providers";
 import { isTerminalState, type LifecycleState } from "@/lib/lifecycle";
 
@@ -143,6 +144,7 @@ export function GatewayPanel() {
         <div className="flex flex-col gap-2">
           <Label>Amount (minor units, TZS)</Label>
           <Input value={amount} onChange={(e) => setAmount(e.target.value)} />
+          <AmountHint amountMinor={amount} currency="TZS" />
         </div>
         <Button onClick={submit} disabled={submitting || !gatewayProvider || !merchantBank || !cardNumber || !amount}>
           Initiate card checkout

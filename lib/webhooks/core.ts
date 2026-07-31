@@ -19,6 +19,15 @@
  * vercel.json "crons" and each plane's dispatch route). A real deployment
  * would use Vercel Workflow or a queue for sub-minute latency; a cron poll
  * is the documented stand-in here.
+ *
+ * CRON FREQUENCY: vercel.json's cron schedule is once daily (Vercel Hobby
+ * plan caps cron frequency at once per 24h — a per-minute schedule, which is
+ * what a real deployment would want, fails to deploy on Hobby entirely).
+ * This does not block demoing the webhook flow: the sandbox console's
+ * "Deliver now" button (components/sandbox/webhook-console.tsx) calls the
+ * same dispatch route directly, on demand, regardless of the cron schedule.
+ * Move to a paid plan (or Vercel Workflow) before relying on the cron alone
+ * for real merchant traffic.
  */
 import { randomUUID } from "node:crypto";
 import { sign } from "../signature";
