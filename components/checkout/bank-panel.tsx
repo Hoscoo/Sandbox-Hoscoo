@@ -11,9 +11,10 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { BankSelector } from "./bank-selector";
 import { TransactionMonitor } from "./transaction-monitor";
-import type { LifecycleState } from "@/lib/lifecycle";
+import { isTerminalState, type LifecycleState } from "@/lib/lifecycle";
 
 import { DEMO_AUTH_HEADERS as AUTH_HEADERS } from "@/lib/sandbox/demo-key";
+import { describePaymentOutcome } from "@/lib/sandbox/demo-response";
 const fetcher = (url: string) => fetch(url, { headers: AUTH_HEADERS }).then((r) => r.json());
 
 const TIPS_ALIAS_FIXTURES = [
@@ -31,10 +32,13 @@ export function BankPanel() {
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const { data: status } = useSWR<{ status: LifecycleState }>(
+  const { data: status } = useSWR<{ status: LifecycleState; error?: { code: string; message: string } }>(
     transactionId ? `/api/v1/sandbox/payments?transactionId=${transactionId}` : null,
     fetcher,
-    { refreshInterval: 2000 },
+    // Stop polling on a terminal status OR an error response (e.g. a 404 for
+    // a transactionId the in-memory store no longer has) — otherwise a
+    // lookup that will never succeed polls forever.
+    { refreshInterval: (latest) => (latest && (latest.error || isTerminalState(latest.status)) ? 0 : 2000) },
   );
 
   async function submit() {
@@ -54,12 +58,9 @@ export function BankPanel() {
         }),
       });
       const json = await res.json();
-      if (!res.ok) {
-        toast.error(json.error?.message ?? "Bank transfer failed");
-        return;
-      }
-      setTransactionId(json.transactionId);
-      toast.success("Bank transfer initiated");
+      if (json.transactionId) setTransactionId(json.transactionId);
+      const outcome = describePaymentOutcome(json);
+      toast[outcome.type](outcome.message);
     } finally {
       setSubmitting(false);
     }

@@ -12,10 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BankSelector } from "./bank-selector";
 import { TransactionMonitor } from "./transaction-monitor";
+import { TestBankModal } from "@/components/sandbox/test-bank-modal";
 import { GATEWAY_PROVIDERS, detectCardScheme, isValidCardNumber, formatCardNumber } from "@/lib/providers";
-import type { LifecycleState } from "@/lib/lifecycle";
+import { isTerminalState, type LifecycleState } from "@/lib/lifecycle";
 
 import { DEMO_AUTH_HEADERS as AUTH_HEADERS } from "@/lib/sandbox/demo-key";
+import { describePaymentOutcome } from "@/lib/sandbox/demo-response";
 const fetcher = (url: string) => fetch(url, { headers: AUTH_HEADERS }).then((r) => r.json());
 
 const CARD_FIXTURES = [
@@ -33,14 +35,17 @@ export function GatewayPanel() {
   const [amount, setAmount] = useState("");
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [challengeOpen, setChallengeOpen] = useState(false);
+  const [resolvingChallenge, setResolvingChallenge] = useState(false);
 
   const scheme = useMemo(() => detectCardScheme(cardNumber), [cardNumber]);
   const valid = useMemo(() => (cardNumber ? isValidCardNumber(cardNumber) : null), [cardNumber]);
+  const gatewayProviderRecord = GATEWAY_PROVIDERS.find((g) => g.code === gatewayProvider);
 
-  const { data: status } = useSWR<{ status: LifecycleState }>(
+  const { data: status, mutate: refreshStatus } = useSWR<{ status: LifecycleState; error?: { code: string; message: string } }>(
     transactionId ? `/api/v1/sandbox/payments?transactionId=${transactionId}` : null,
     fetcher,
-    { refreshInterval: 2000 },
+    { refreshInterval: (latest) => (latest && (latest.error || isTerminalState(latest.status)) ? 0 : 2000) },
   );
 
   async function submit() {
@@ -60,14 +65,34 @@ export function GatewayPanel() {
         }),
       });
       const json = await res.json();
-      if (!res.ok) {
-        toast.error(json.error?.message ?? "Card checkout failed");
-        return;
-      }
-      setTransactionId(json.transactionId);
-      toast.success("Card checkout initiated");
+      if (json.transactionId) setTransactionId(json.transactionId);
+      const outcome = describePaymentOutcome(json);
+      toast[outcome.type](outcome.message);
+      if (json.requiresAction) setChallengeOpen(true);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleChallengeDecision(decision: "approved" | "denied") {
+    if (!transactionId) return;
+    setResolvingChallenge(true);
+    try {
+      const res = await fetch("/api/v1/sandbox/payments/challenge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...AUTH_HEADERS },
+        body: JSON.stringify({ transactionId, decision }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json.error?.message ?? "Failed to resolve challenge");
+      } else {
+        toast[json.status === "COMPLETED" ? "success" : "error"](`Challenge ${decision}: ${json.status}`);
+      }
+      setChallengeOpen(false);
+      await refreshStatus();
+    } finally {
+      setResolvingChallenge(false);
     }
   }
 
@@ -132,6 +157,21 @@ export function GatewayPanel() {
           </>
         )}
       </CardContent>
+
+      {gatewayProviderRecord && (
+        <TestBankModal
+          open={challengeOpen}
+          onOpenChange={setChallengeOpen}
+          mode="sandbox"
+          provider={gatewayProviderRecord}
+          amountMinor={amount && /^\d+$/.test(amount) ? BigInt(amount) : 0n}
+          currency="TZS"
+          onAuthorize={(result) => {
+            if (resolvingChallenge) return;
+            void handleChallengeDecision(result === "approved" ? "approved" : "denied");
+          }}
+        />
+      )}
     </Card>
   );
 }

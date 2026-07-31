@@ -14,14 +14,16 @@ import { AccountTypeSelector } from "./account-type-selector";
 import { TransactionMonitor } from "./transaction-monitor";
 import { TestBankModal } from "@/components/sandbox/test-bank-modal";
 import { MNOS, type AccountType } from "@/lib/providers";
-import type { LifecycleState } from "@/lib/lifecycle";
+import { isTerminalState, type LifecycleState } from "@/lib/lifecycle";
 
 import { DEMO_AUTH_HEADERS as AUTH_HEADERS } from "@/lib/sandbox/demo-key";
+import { describePaymentOutcome } from "@/lib/sandbox/demo-response";
 
 interface PaymentStatusResponse {
   transactionId: string;
   status: LifecycleState;
   requiresAction: boolean;
+  error?: { code: string; message: string };
 }
 
 const fetcher = (url: string) => fetch(url, { headers: AUTH_HEADERS }).then((r) => r.json());
@@ -47,7 +49,11 @@ export function CheckoutPanel() {
   const { data: status, mutate: refreshStatus } = useSWR<PaymentStatusResponse>(
     transactionId ? `/api/v1/sandbox/payments?transactionId=${transactionId}` : null,
     fetcher,
-    { refreshInterval: 2000 },
+    // Stop polling on a terminal status OR an error response (e.g. a 404 for
+    // a transactionId the in-memory store no longer has) — otherwise this
+    // polls forever, whether the payment finished or the lookup can never
+    // succeed at all.
+    { refreshInterval: (latest) => (latest && (latest.error || isTerminalState(latest.status)) ? 0 : 2000) },
   );
 
   const destinationProviderRecord = MNOS.find((m) => m.code === destProvider);
@@ -69,17 +75,10 @@ export function CheckoutPanel() {
         }),
       });
       const json = await res.json();
-      if (!res.ok) {
-        toast.error(json.error?.message ?? "Payment initiation failed");
-        return;
-      }
-      setTransactionId(json.transactionId);
-      if (json.requiresAction) {
-        setChallengeOpen(true);
-        toast.info("Authorization required");
-      } else {
-        toast.success("Payment initiated");
-      }
+      if (json.transactionId) setTransactionId(json.transactionId);
+      const outcome = describePaymentOutcome(json);
+      toast[outcome.type](outcome.message);
+      if (json.requiresAction) setChallengeOpen(true);
     } finally {
       setSubmitting(false);
     }

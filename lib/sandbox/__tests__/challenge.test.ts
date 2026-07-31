@@ -162,3 +162,56 @@ describe("magic LIFECYCLE_STATE failure values never move the ledger", () => {
     expect(after).toBe(before);
   });
 });
+
+describe("GATEWAY_CHECKOUT magic card PANs (regression: source-leg identifiers were never checked)", () => {
+  // Bug: resolveSimulationOutcome was called with a single `msisdn` field set
+  // to `destination.identifier || source.identifier`. For GATEWAY_CHECKOUT
+  // the destination is always present (the merchant account), so the source
+  // leg's card PAN — where every card fixture's magic value actually lives —
+  // was never looked up at all. Every card fixture except plain success was
+  // silently dead. Caught by clicking through the sandbox console's Card tab.
+  const apiKey = "hsc_test_gateway_pan_suite";
+
+  function cardRequest(pan: string) {
+    return new NextRequest("https://sandbox-api.hoscoo.com/api/v1/sandbox/payments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        channel: "GATEWAY_CHECKOUT",
+        amountMinor: "150000",
+        currency: "TZS",
+        market: "TZ",
+        source: { providerCode: "SELCOM_GATEWAY", accountType: "WALLET", identifier: pan },
+        destination: { providerCode: "CRDB", accountType: "MERCHANT_TILL", identifier: "TILL001" },
+        reference: `card-pan-test-${Date.now()}-${pan}`,
+      }),
+    });
+  }
+
+  it("the 3-DS challenge PAN issues AUTHORIZED with requiresAction", async () => {
+    const res = await initiate(cardRequest("4000000000003220"));
+    const json = await res.json();
+    expect(json.status).toBe("AUTHORIZED");
+    expect(json.requiresAction).toBe(true);
+  });
+
+  it("the 3-DS failure PAN fails immediately", async () => {
+    const res = await initiate(cardRequest("4000000000003063"));
+    const json = await res.json();
+    expect(json.status).toBe("FAILED");
+    expect(json.reasonCode).toBe("THREE_DS_CHALLENGE_FAILED");
+  });
+
+  it("the insufficient-funds PAN fails without settling", async () => {
+    const res = await initiate(cardRequest("4000000000009995"));
+    const json = await res.json();
+    expect(json.status).toBe("FAILED");
+    expect(json.reasonCode).toBe("INSUFFICIENT_FUNDS");
+  });
+
+  it("the plain success PAN completes", async () => {
+    const res = await initiate(cardRequest("4242424242424242"));
+    const json = await res.json();
+    expect(json.status).toBe("COMPLETED");
+  });
+});

@@ -100,7 +100,15 @@ function scopeSpecificity(scope: RuleScope): number {
 // Magic values — stateless, derived purely from request content.
 // ---------------------------------------------------------------------------
 
-const MAGIC_MSISDN_OUTCOMES: Record<string, SimulationOutcome> = {
+/**
+ * Keyed by whatever identifier a leg carries — an MSISDN for wallet/bank
+ * legs, a PAN for card legs. Both are just strings, and a transaction only
+ * ever has two identifiers to check (source, destination), so one shared
+ * table keeps GATEWAY_CHECKOUT's card fixtures (lib/sandbox/fixtures.ts's
+ * GATEWAY_FIXTURES) and every wallet fixture on the same lookup path
+ * instead of needing a second, easy-to-forget table.
+ */
+const MAGIC_IDENTIFIER_OUTCOMES: Record<string, SimulationOutcome> = {
   "+255700000100": { kind: "LIFECYCLE_STATE", state: "COMPLETED" },
   "+255700000101": { kind: "LIFECYCLE_STATE", state: "FAILED", reasonCode: "INSUFFICIENT_FUNDS" },
   "+255700000102": { kind: "LIFECYCLE_STATE", state: "FAILED", reasonCode: "TIMEOUT" },
@@ -110,6 +118,11 @@ const MAGIC_MSISDN_OUTCOMES: Record<string, SimulationOutcome> = {
   "+255700000106": { kind: "THREE_DS_FAILURE" },
   "+255700000107": { kind: "RAIL_UNAVAILABLE", providerCode: "*" },
   "+255700000108": { kind: "DEBIT_SUCCEEDED_CREDIT_FAILED" },
+  // GATEWAY_CHECKOUT card fixtures (lib/sandbox/fixtures.ts's GATEWAY_FIXTURES) —
+  // 4242... intentionally has no entry here; its absence IS the success case.
+  "4000000000003220": { kind: "THREE_DS_CHALLENGE" },
+  "4000000000003063": { kind: "THREE_DS_FAILURE" },
+  "4000000000009995": { kind: "LIFECYCLE_STATE", state: "FAILED", reasonCode: "INSUFFICIENT_FUNDS" },
 };
 
 const MAGIC_QUOTE_ID_OUTCOMES: Record<string, SimulationOutcome> = {
@@ -119,8 +132,16 @@ const MAGIC_QUOTE_ID_OUTCOMES: Record<string, SimulationOutcome> = {
   hsc_quote_after_cutoff: { kind: "OUTSIDE_CUTOFF" },
 };
 
-function magicOutcome(input: { msisdn?: string; quoteId?: string }): SimulationOutcome | undefined {
-  if (input.msisdn && MAGIC_MSISDN_OUTCOMES[input.msisdn]) return MAGIC_MSISDN_OUTCOMES[input.msisdn];
+/**
+ * Checks BOTH legs' identifiers, not "destination, falling back to source" —
+ * that fallback previously meant a GATEWAY_CHECKOUT's card PAN (on the
+ * source leg) was never even looked up whenever a destination identifier
+ * was present (which is always, for cards — it's the merchant account), so
+ * every card magic-value fixture except plain success was silently dead.
+ */
+function magicOutcome(input: { sourceIdentifier?: string; destinationIdentifier?: string; quoteId?: string }): SimulationOutcome | undefined {
+  if (input.destinationIdentifier && MAGIC_IDENTIFIER_OUTCOMES[input.destinationIdentifier]) return MAGIC_IDENTIFIER_OUTCOMES[input.destinationIdentifier];
+  if (input.sourceIdentifier && MAGIC_IDENTIFIER_OUTCOMES[input.sourceIdentifier]) return MAGIC_IDENTIFIER_OUTCOMES[input.sourceIdentifier];
   if (input.quoteId && MAGIC_QUOTE_ID_OUTCOMES[input.quoteId]) return MAGIC_QUOTE_ID_OUTCOMES[input.quoteId];
   return undefined;
 }
@@ -146,7 +167,8 @@ export function parseHeaderDirective(headerValue: string | null): SimulationOutc
 export function resolveSimulationOutcome(input: {
   apiKey: string;
   accountIdentifier?: string;
-  msisdn?: string;
+  sourceIdentifier?: string;
+  destinationIdentifier?: string;
   quoteId?: string;
   headerDirective: string | null;
   now?: Date;
@@ -164,5 +186,5 @@ export function resolveSimulationOutcome(input: {
     return winner.outcome;
   }
 
-  return magicOutcome({ msisdn: input.msisdn, quoteId: input.quoteId });
+  return magicOutcome({ sourceIdentifier: input.sourceIdentifier, destinationIdentifier: input.destinationIdentifier, quoteId: input.quoteId });
 }

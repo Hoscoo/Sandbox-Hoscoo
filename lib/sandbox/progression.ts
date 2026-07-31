@@ -68,6 +68,11 @@ export async function settleAndProgress(params: SettleParams): Promise<Settlemen
         channel: instruction.channel,
         amountMinor: instruction.amountMinor.toString(),
         currency: instruction.currency,
+        // A merchant's webhook handler needs to know which account a
+        // payment event pertains to. The delivery inspector masks this
+        // (app/api/v1/sandbox/webhooks/logs/route.ts) — the merchant's own
+        // endpoint still receives it in full, as production would.
+        destinationIdentifier: instruction.destination.identifier,
         ...extra,
       },
       now,

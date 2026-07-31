@@ -79,7 +79,8 @@ export async function POST(req: NextRequest) {
     const outcome = resolveSimulationOutcome({
       apiKey,
       accountIdentifier: instruction.destination.identifier,
-      msisdn: instruction.destination.identifier || instruction.source.identifier,
+      sourceIdentifier: instruction.source.identifier,
+      destinationIdentifier: instruction.destination.identifier,
       quoteId: instruction.quoteId,
       headerDirective: req.headers.get("x-hoscoo-simulate"),
       now,
@@ -106,7 +107,22 @@ export async function POST(req: NextRequest) {
       const tx = persist(state, opts);
       const eventType = LIFECYCLE_EVENT_NAMES[state];
       if (eventType) {
-        emitEvent(apiKey, transactionId, eventType, { transactionId, status: state, rail: tx.rail, reasonCode: tx.reasonCode, channel: instruction.channel, amountMinor: instruction.amountMinor.toString(), currency: instruction.currency }, now);
+        emitEvent(
+          apiKey,
+          transactionId,
+          eventType,
+          {
+            transactionId,
+            status: state,
+            rail: tx.rail,
+            reasonCode: tx.reasonCode,
+            channel: instruction.channel,
+            amountMinor: instruction.amountMinor.toString(),
+            currency: instruction.currency,
+            destinationIdentifier: instruction.destination.identifier,
+          },
+          now,
+        );
       }
       return tx;
     };

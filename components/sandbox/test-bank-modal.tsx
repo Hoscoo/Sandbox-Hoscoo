@@ -7,14 +7,26 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ProviderMark } from "@/components/checkout/provider-mark";
-import type { MnoProvider } from "@/lib/providers";
+import type { MnoProvider, GatewayProvider } from "@/lib/providers";
 import { formatCurrency, type CurrencyCode } from "@/lib/corridors";
 import type { SdkMode, FxQuoteResult } from "@/lib/sdk/client";
 
-type AuthVariant = "ussd" | "app_push" | "agent_assisted";
+type AuthVariant = "ussd" | "app_push" | "agent_assisted" | "card_otp";
 
-/** Driven by provider capability data, never hardcoded per provider — a seventh wallet provider needs no new variant. */
-function authVariantFor(provider: MnoProvider): AuthVariant {
+function isGatewayProvider(provider: MnoProvider | GatewayProvider): provider is GatewayProvider {
+  return !("capabilities" in provider);
+}
+
+/**
+ * Driven by provider capability data, never hardcoded per provider — a
+ * seventh wallet provider needs no new variant. Card/gateway providers get
+ * their own OTP variant (real-world 3-DS is a cardholder-phone OTP or bank
+ * redirect, not a wallet USSD/app-push prompt — rendering the wallet UI for
+ * a card would teach the wrong integration shape just as much as one
+ * generic prompt for every wallet would).
+ */
+function authVariantFor(provider: MnoProvider | GatewayProvider): AuthVariant {
+  if (isGatewayProvider(provider)) return "card_otp";
   if (provider.capabilities.ussdPush) return "ussd";
   if (provider.capabilities.appPush) return "app_push";
   return "agent_assisted";
@@ -25,7 +37,7 @@ export interface TestBankModalProps {
   onOpenChange: (open: boolean) => void;
   /** Structural guarantee: this component refuses to render authorization UI unless mode === 'sandbox', regardless of what a caller passes. */
   mode: SdkMode;
-  provider: MnoProvider;
+  provider: MnoProvider | GatewayProvider;
   amountMinor: bigint;
   currency: CurrencyCode;
   crossBorder?: { quote: FxQuoteResult; destinationCurrency: CurrencyCode };
@@ -67,8 +79,15 @@ export function TestBankModal({ open, onOpenChange, mode, provider, amountMinor,
             <ProviderMark provider={provider} />
           </DialogTitle>
           <DialogDescription>
-            No real money moves. This authorization screen simulates {provider.displayName}&apos;s{" "}
-            {variant === "ussd" ? "USSD PIN prompt" : variant === "app_push" ? "in-app push approval" : "agent-assisted confirmation"}.
+            No real money moves. This authorization screen simulates{" "}
+            {variant === "ussd"
+              ? `${provider.displayName}'s USSD PIN prompt`
+              : variant === "app_push"
+                ? `${provider.displayName}'s in-app push approval`
+                : variant === "card_otp"
+                  ? `${provider.displayName}'s 3-D Secure one-time-passcode challenge`
+                  : `${provider.displayName}'s agent-assisted confirmation`}
+            .
           </DialogDescription>
         </DialogHeader>
 
@@ -132,6 +151,13 @@ export function TestBankModal({ open, onOpenChange, mode, provider, amountMinor,
               Simulates the customer completing this transaction with a {provider.displayName} agent using confirmation code{" "}
               <span className="font-mono">SBX-{pin || "0000"}</span>.
             </p>
+          )}
+
+          {variant === "card_otp" && (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-muted-foreground">Enter the 6-digit code sent to the cardholder&apos;s registered number.</p>
+              <Input inputMode="numeric" maxLength={6} placeholder="000000" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} />
+            </div>
           )}
 
           <div className="flex gap-2">

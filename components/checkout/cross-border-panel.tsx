@@ -13,9 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MnoSelector } from "./mno-selector";
 import { TransactionMonitor } from "./transaction-monitor";
 import { CORRIDORS, MARKET_STATUS_META, formatCurrency } from "@/lib/corridors";
-import type { LifecycleState } from "@/lib/lifecycle";
+import { isTerminalState, type LifecycleState } from "@/lib/lifecycle";
 
 import { DEMO_AUTH_HEADERS as AUTH_HEADERS } from "@/lib/sandbox/demo-key";
+import { describePaymentOutcome } from "@/lib/sandbox/demo-response";
 const fetcher = (url: string) => fetch(url, { headers: AUTH_HEADERS }).then((r) => r.json());
 
 const MAGIC_QUOTE_IDS = [
@@ -56,10 +57,10 @@ export function CrossBorderPanel() {
 
   const corridor = CORRIDORS.find((c) => c.id === corridorId)!;
 
-  const { data: status } = useSWR<{ status: LifecycleState }>(
+  const { data: status } = useSWR<{ status: LifecycleState; error?: { code: string; message: string } }>(
     transactionId ? `/api/v1/sandbox/payments?transactionId=${transactionId}` : null,
     fetcher,
-    { refreshInterval: 2000 },
+    { refreshInterval: (latest) => (latest && (latest.error || isTerminalState(latest.status)) ? 0 : 2000) },
   );
 
   useEffect(() => {
@@ -111,12 +112,9 @@ export function CrossBorderPanel() {
         }),
       });
       const json = await res.json();
-      if (!res.ok) {
-        toast.error(json.error?.message ?? "Cross-border payment failed");
-        return;
-      }
-      setTransactionId(json.transactionId);
-      toast.success("Cross-border payment initiated");
+      if (json.transactionId) setTransactionId(json.transactionId);
+      const outcome = describePaymentOutcome(json);
+      toast[outcome.type](outcome.message);
     } finally {
       setSubmitting(false);
     }
