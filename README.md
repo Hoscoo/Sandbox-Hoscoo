@@ -63,4 +63,7 @@ Postgres service on every push and PR.
 - Webhook replay re-delivers a stored payload and nothing else — it cannot
   re-enter the ledger or re-quote FX (`lib/sandbox/__tests__/replay-isolation.test.ts`).
 
-See [PARITY.md](PARITY.md) for the full parity contract and known gaps.
+See [PARITY.md](PARITY.md) for the full parity contract and known gaps, and
+[HANDOFF.md](HANDOFF.md) for the developer continuation guide — what's
+built, why it's built that way, and the prioritized roadmap to a finished
+product.
